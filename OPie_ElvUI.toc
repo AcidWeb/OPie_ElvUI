@@ -1,0 +1,8 @@
+## Interface: 100000
+## Title: OPie: |cff1784d1ElvUI|r
+## Notes: Adds ElvUI skin to OPie.
+## Version: 1.0.0
+## Author: AcidWeb
+## RequiredDeps: ElvUI, OPie
+
+OPie_ElvUI.lua
