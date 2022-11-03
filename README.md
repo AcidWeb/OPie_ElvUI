@@ -1,8 +1,8 @@
 ﻿# OPie: ElvUI
 
-[Wago Addons]()
+[Wago Addons](https://addons.wago.io/addons/opie-elvui-skin)
 
-[WoWInterface]()
+[WoWInterface](https://www.wowinterface.com/downloads/info26446-OPieElvUISkin.html)
 
 ## COPYRIGHT
 

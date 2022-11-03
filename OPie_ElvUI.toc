@@ -4,5 +4,7 @@
 ## Version: 1.0.0
 ## Author: AcidWeb
 ## RequiredDeps: ElvUI, OPie
+## X-WoWI-ID: 26446
+## X-Wago-ID: 9rN44jND
 
 OPie_ElvUI.lua
