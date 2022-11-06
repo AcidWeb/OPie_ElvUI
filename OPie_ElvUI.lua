@@ -57,6 +57,7 @@ end
 function indicatorAPI:SetIcon(texture)
 	self.icon:SetTexture(texture)
 	self.icon:SetTexCoord(unpack(E.TexCoords))
+	self.shadow:SetShown(ns.db.global.shadow)
 end
 function indicatorAPI:SetIconTexCoord(a,b,c,d, e,f,g,h)
 	if a and b and c and d then
@@ -181,11 +182,13 @@ local CreateIndicator do
 			count = cc("SetPoint", cc("SetJustifyH", e:CreateFontString(nil, "OVERLAY", "NumberFontNormal"), "RIGHT"), "BOTTOMRIGHT", -2, 2),
 			key = cc("SetPoint", cc("SetJustifyH", e:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmallGray"), "RIGHT"), "TOPRIGHT", -2, -3),
 			equipBanner = cc("SetPoint", cc("SetTexCoord", cc("SetTexture", cc("SetSize", e:CreateTexture(nil, "ARTWORK", nil, 2), size/5, size/4), "Interface\\GuildFrame\\GuildDifficulty"), 0, 42/128, 6/64, 52/64), "TOPLEFT", 6*size/64, -3*size/64),
-			label = cc("SetPoint", cc("SetMaxLines", cc("SetJustifyV", cc("SetJustifyH", cc("SetSize", e:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), size-4, 12), "CENTER"), "BOTTOM"), 1), "BOTTOMLEFT", 3, 4)
+			label = cc("SetPoint", cc("SetMaxLines", cc("SetJustifyV", cc("SetJustifyH", cc("SetSize", e:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), size-4, 12), "CENTER"), "BOTTOM"), 1), "BOTTOMLEFT", 3, 4),
+			shadow = cc("SetPoint", cc("SetPoint", cc("ClearAllPoints", e:CreateShadow(nil, true)), "TOPLEFT", -2, 2), "BOTTOMRIGHT", 2, -2)
 		}, apimeta)
 		b:SetScript("OnUpdate", Indicator_ApplyParentAlpha)
 		b:SetScript("OnShow", Indicator_ApplyParentAlpha)
 		r.label:SetPoint("BOTTOMRIGHT", r.count, "BOTTOMLEFT", 2, 0)
+		r.shadow:Hide()
 		E:RegisterCooldown(r.cd, "OPie")
 		return r
 	end
@@ -194,13 +197,19 @@ end
 ns = LibStub("AceAddon-3.0"):NewAddon("OPie: ElvUI")
 ns.defaultSettings = {
 	global = {
-
+		shadow = false
 	}
 }
 ns.aceConfig = {
 	type = "group",
 	args = {
-
+		shadow = {
+			name = "Add a shadow under the buttons",
+			type = "toggle",
+			width = "full",
+			set = function(_, val) ns.db.global.shadow = val end,
+			get = function(_) return ns.db.global.shadow end
+		}
 	}
 }
 function ns:OnInitialize()
