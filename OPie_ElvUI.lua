@@ -1,6 +1,9 @@
+local _G = _G
+local addonName, ns = ...
+
 local E = unpack(_G.ElvUI)
-local gfxBase = ([[Interface\AddOns\%s\Media\]]):format((...))
 local TEN = select(4, GetBuildInfo()) >= 10e4
+local gfxBase = ([[Interface\AddOns\%s\Media\]]):format(addonName)
 
 local function cc(m, f, ...)
 	f[m](f, ...)
@@ -188,11 +191,29 @@ local CreateIndicator do
 	end
 end
 
-_G.OPie.UI:RegisterIndicatorConstructor("elvui", {
-	name="ElvUI",
-	apiLevel=1,
-	CreateIndicator=CreateIndicator,
-	supportsCooldownNumbers=false,
-	supportsShortLabels=true,
-	_CreateQuadTexture=CreateQuadTexture,
-})
+ns = LibStub("AceAddon-3.0"):NewAddon("OPie: ElvUI")
+ns.defaultSettings = {
+	global = {
+
+	}
+}
+ns.aceConfig = {
+	type = "group",
+	args = {
+
+	}
+}
+function ns:OnInitialize()
+	ns.db = LibStub("AceDB-3.0"):New("OPieElvUIDB", ns.defaultSettings, true)
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("OPie: ElvUI", ns.aceConfig)
+	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OPie: ElvUI", "OPie: |cff1784d1ElvUI|r")
+
+	_G.OPie.UI:RegisterIndicatorConstructor("elvui", {
+		name="ElvUI",
+		apiLevel=1,
+		CreateIndicator=CreateIndicator,
+		supportsCooldownNumbers=false,
+		supportsShortLabels=true,
+		_CreateQuadTexture=CreateQuadTexture,
+	})
+end
