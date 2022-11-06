@@ -85,8 +85,6 @@ function indicatorAPI:SetUsable(usable, _usableCharge, _cd, nomana, norange)
 end
 function indicatorAPI:SetDominantColor(r,g,b)
 	r, g, b = r or 1, g or 1, b or 0.6
-	local r2, g2, b2 = darken(r,g,b, 0.20)
-	local r3, g3, b3 = darken(r,g,b, 0.10, 0.50)
 	self.hiEdge:SetVertexColor(r, g, b)
 	self.iglow:SetVertexColor(r, g, b)
 	self.oglow:SetVertexColor(r, g, b)
@@ -119,17 +117,17 @@ function indicatorAPI:SetCooldown(remain, duration, usable)
 	if duration and remain and duration > 0 and remain > 0 then
 		local start = GetTime() + remain - duration
 		if usable then
-		   self.Cooldown:SetDrawEdge(true)
-		   self.Cooldown:SetDrawSwipe(false)
+		   self.cd:SetDrawEdge(true)
+		   self.cd:SetDrawSwipe(false)
 		else
-		   self.Cooldown:SetDrawEdge(false)
-		   self.Cooldown:SetDrawSwipe(true)
-		   self.Cooldown:SetSwipeColor(0, 0, 0, 0.8)
+		   self.cd:SetDrawEdge(false)
+		   self.cd:SetDrawSwipe(true)
+		   self.cd:SetSwipeColor(0, 0, 0, 0.8)
 		end
-		self.Cooldown:SetCooldown(start, duration)
-		self.Cooldown:Show()
+		self.cd:SetCooldown(start, duration)
+		self.cd:Show()
 	 else
-		self.Cooldown:Hide()
+		self.cd:Hide()
 	 end
 end
 function indicatorAPI:SetHighlighted(highlight)
@@ -167,8 +165,8 @@ local CreateIndicator do
 		local b = cc("SetSize", CreateFrame("Frame", name, parent), size, size)
 		cc(TEN and "SetIsFrameBuffer" or "SetFrameBuffer", cc("SetFlattensRenderLayers", b, true), true)
 		local e = cc("SetAllPoints", CreateFrame("Frame", nil, b))
-		local cd = cc("SetPoint", cc("SetSize", cc("ClearAllPoints", CreateFrame("Cooldown", nil, b, "CooldownFrameTemplate")), size-4, size-4), "CENTER")
-		local r = setmetatable({[0]=b, Cooldown=cd,
+		local r = setmetatable({[0]=b,
+			cd = cc("SetPoint", cc("SetSize", cc("ClearAllPoints", CreateFrame("Cooldown", nil, e, "CooldownFrameTemplate")), size-4, size-4), "CENTER"),
 			edge = cc("SetAllPoints", cc("SetTexture", e:CreateTexture(nil, "OVERLAY"), gfxBase .. "borderlo")),
 			hiEdge = cc("SetAllPoints", cc("SetTexture", e:CreateTexture(nil, "OVERLAY", nil, 1), gfxBase .. "borderhi")),
 			oglow = cc("SetShown", CreateQuadTexture("BACKGROUND", size*2, gfxBase .. "oglow", e), false),
@@ -185,7 +183,7 @@ local CreateIndicator do
 		b:SetScript("OnUpdate", Indicator_ApplyParentAlpha)
 		b:SetScript("OnShow", Indicator_ApplyParentAlpha)
 		r.label:SetPoint("BOTTOMRIGHT", r.count, "BOTTOMLEFT", 2, 0)
-		E:RegisterCooldown(r.Cooldown, "OPie")
+		E:RegisterCooldown(r.cd, "OPie")
 		return r
 	end
 end
