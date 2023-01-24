@@ -2,7 +2,6 @@ local _G = _G
 local addonName, ns = ...
 
 local E = unpack(_G.ElvUI)
-local TEN = select(4, GetBuildInfo()) >= 10e4
 local gfxBase = ([[Interface\AddOns\%s\Media\]]):format(addonName)
 
 local function cc(m, f, ...)
@@ -167,7 +166,7 @@ local CreateIndicator do
 	end
 	function CreateIndicator(name, parent, size, nested)
 		local b = cc("SetSize", CreateFrame("Frame", name, parent), size, size)
-		cc(TEN and "SetIsFrameBuffer" or "SetFrameBuffer", cc("SetFlattensRenderLayers", b, true), true)
+		cc(b.SetIsFrameBuffer and "SetIsFrameBuffer" or "SetFrameBuffer", cc("SetFlattensRenderLayers", b, true), true)
 		local e = cc("SetAllPoints", CreateFrame("Frame", nil, b))
 		local r = setmetatable({[0]=b,
 			cd = cc("SetPoint", cc("SetSize", cc("ClearAllPoints", CreateFrame("Cooldown", nil, e, "CooldownFrameTemplate")), size-4, size-4), "CENTER"),
