@@ -2,12 +2,18 @@ local _G = _G
 local addonName, ns = ...
 
 local E = unpack(_G.ElvUI)
-local gfxBase = ([[Interface\AddOns\%s\Media\]]):format(addonName)
-
-local function cc(m, f, ...)
-	f[m](f, ...)
-	return f
+local gx do
+	local b = ([[Interface\AddOns\%s\Media\]]):format(addonName)
+	gx = {
+		BorderLow = b .. "borderlo",
+		BorderHigh = b .. "borderhi",
+		OuterGlow = b .. "oglow",
+		InnerGlow = b .. "iglow",
+		Ribbon = b .. "ribbon",
+		IconMask = b .. "iconmask",
+	}
 end
+
 local darken do
 	local CSL = CreateFrame("ColorSelect")
 	function darken(r,g,b, vf, sf)
@@ -33,13 +39,30 @@ local CreateQuadTexture do
 	function CreateQuadTexture(layer, size, file, parent, qparent)
 		local group, size = setmetatable({}, quadTemplate), size/2
 		for i=1,4 do
-			local tex, d, l = cc("SetSize", cc("SetTexture", (parent or qparent[i]):CreateTexture(nil, layer), file), size, size), i > 2, 2 > i or i > 3
+			local tex, d, l = (parent or qparent[i]):CreateTexture(nil, layer), i > 2, 2 > i or i > 3
+			tex:SetSize(size,size)
+			tex:SetTexture(file)
 			tex:SetTexCoord(l and 0 or 1, l and 1 or 0, d and 1 or 0, d and 0 or 1)
 			tex:SetTexelSnappingBias(0)
 			tex:SetSnapToPixelGrid(false)
-			group[i] = cc("SetPoint", tex, quadPoints[i], parent or qparent[i], parent and "CENTER" or quadPoints[i])
+			tex:SetPoint(quadPoints[i], parent or qparent[i], parent and "CENTER" or quadPoints[i])
+			group[i] = tex
 		end
 		return group
+	end
+	ns.CreateQuadTexture = CreateQuadTexture
+end
+local qualAtlas = {} do
+	for i=1,5 do
+		qualAtlas[i] = "Professions-Icon-Quality-Tier" .. i .. "-Small"
+	end
+end
+
+local function adjustIconAspect(self, aspect)
+	if self.iconAspect ~= aspect then
+		self.iconAspect = aspect
+		local w, h = self.iconbg:GetSize()
+		self.icon:SetSize(aspect < 1 and h*aspect or w, aspect > 1 and w/aspect or h)
 	end
 end
 
@@ -53,10 +76,16 @@ do -- inherit SetPoint, SetScale, GetScale, SetShown, SetParent
 		end
 	end
 end
-function indicatorAPI:SetIcon(texture)
+function indicatorAPI:SetIcon(texture, aspect)
 	self.icon:SetTexture(texture)
 	self.icon:SetTexCoord(unpack(E.TexCoords))
 	self.shadow:SetShown(ns.db.global.shadow)
+	return adjustIconAspect(self, aspect)
+end
+function indicatorAPI:SetIconAtlas(atlas, aspect)
+	self.icon:SetAtlas(atlas)
+	self.shadow:SetShown(ns.db.global.shadow)
+	return adjustIconAspect(self, aspect)
 end
 function indicatorAPI:SetIconTexCoord(a,b,c,d, e,f,g,h)
 	if a and b and c and d then
@@ -93,18 +122,18 @@ function indicatorAPI:SetDominantColor(r,g,b)
 	self.oglow:SetVertexColor(r, g, b)
 	self.edge:SetVertexColor(darken(r,g,b, 0.80))
 end
-function indicatorAPI:SetOverlayIcon(texture, w, h, ...)
-	if not texture then
-		self.overIcon:Hide()
+function indicatorAPI:SetOverlayIcon(tex, w, h, ...)
+	local oi = self.overIcon
+	if not tex then
+		return oi:Hide()
+	end
+	oi:Show()
+	oi:SetTexture(tex)
+	oi:SetSize(w, h)
+	if ... then
+		oi:SetTexCoord(...)
 	else
-		self.overIcon:Show()
-		self.overIcon:SetTexture(texture)
-		self.overIcon:SetSize(w, h)
-		if ... then
-			self.overIcon:SetTexCoord(...)
-		else
-			self.overIcon:SetTexCoord(0,1, 0,1)
-		end
+		oi:SetTexCoord(0,1, 0,1)
 	end
 end
 function indicatorAPI:SetOverlayIconVertexColor(...)
@@ -155,39 +184,93 @@ end
 function indicatorAPI:SetShortLabel(text)
 	self.label:SetText(text)
 end
+function indicatorAPI:SetQualityOverlay(qual)
+	local s, qa = self.qualityMark, qualAtlas[qual]
+	s:SetAtlas(qa)
+	s:SetShown(qa ~= nil)
+end
 
 local CreateIndicator do
 	local apimeta = {__index=indicatorAPI}
-	local function Indicator_ApplyParentAlpha(self)
-		local p = self:GetParent()
-		if p then
-			self:SetAlpha(p:GetEffectiveAlpha())
-		end
-	end
 	function CreateIndicator(name, parent, size, nested)
-		local b = cc("SetSize", CreateFrame("Frame", name, parent), size, size)
-		cc(b.SetIsFrameBuffer and "SetIsFrameBuffer" or "SetFrameBuffer", cc("SetFlattensRenderLayers", b, true), true)
-		local e = cc("SetAllPoints", CreateFrame("Frame", nil, b))
-		local r = setmetatable({[0]=b,
-			cd = cc("SetPoint", cc("SetSize", cc("ClearAllPoints", CreateFrame("Cooldown", nil, e, "CooldownFrameTemplate")), size-4, size-4), "CENTER"),
-			edge = cc("SetAllPoints", cc("SetTexture", e:CreateTexture(nil, "OVERLAY"), gfxBase .. "borderlo")),
-			hiEdge = cc("SetAllPoints", cc("SetTexture", e:CreateTexture(nil, "OVERLAY", nil, 1), gfxBase .. "borderhi")),
-			oglow = cc("SetShown", CreateQuadTexture("BACKGROUND", size*2, gfxBase .. "oglow", e), false),
-			iglow = cc("SetAllPoints", cc("SetAlpha", cc("SetTexture", e:CreateTexture(nil, "ARTWORK", nil, 1), gfxBase .. "iglow"), nested and 0.60 or 1)),
-			icon = cc("SetPoint", cc("SetSize", e:CreateTexture(nil, "ARTWORK"), 60*size/64, 60*size/64), "CENTER"),
-			veil = cc("SetColorTexture", cc("SetPoint", cc("SetSize", e:CreateTexture(nil, "ARTWORK", nil, 2), 60*size/64, 60*size/64), "CENTER"), 0, 0, 0),
-			ribbon = cc("SetShown", cc("SetTexture", cc("SetAllPoints", e:CreateTexture(nil, "ARTWORK", nil, 3)), gfxBase .. "ribbon"), false),
-			overIcon = cc("SetPoint", e:CreateTexture(nil, "ARTWORK", nil, 4), "BOTTOMLEFT", e, "BOTTOMLEFT", 4, 4),
-			count = cc("SetPoint", cc("SetJustifyH", e:CreateFontString(nil, "OVERLAY", "NumberFontNormal"), "RIGHT"), "BOTTOMRIGHT", -2, 2),
-			key = cc("SetPoint", cc("SetJustifyH", e:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmallGray"), "RIGHT"), "TOPRIGHT", -2, -3),
-			equipBanner = cc("SetPoint", cc("SetTexCoord", cc("SetTexture", cc("SetSize", e:CreateTexture(nil, "ARTWORK", nil, 2), size/5, size/4), "Interface\\GuildFrame\\GuildDifficulty"), 0, 42/128, 6/64, 52/64), "TOPLEFT", 6*size/64, -3*size/64),
-			label = cc("SetPoint", cc("SetMaxLines", cc("SetJustifyV", cc("SetJustifyH", cc("SetSize", e:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), size-4, 12), "CENTER"), "BOTTOM"), 1), "BOTTOMLEFT", 3, 4),
-			shadow = cc("SetPoint", cc("SetPoint", cc("ClearAllPoints", e:CreateShadow(nil, true)), "TOPLEFT", -2, 2), "BOTTOMRIGHT", 2, -2)
-		}, apimeta)
-		b:SetScript("OnUpdate", Indicator_ApplyParentAlpha)
-		b:SetScript("OnShow", Indicator_ApplyParentAlpha)
-		r.label:SetPoint("BOTTOMRIGHT", r.count, "BOTTOMLEFT", 2, 0)
-		r.shadow:Hide()
+		local cf = CreateFrame("Frame", name, parent)
+			cf:SetSize(size, size)
+		local bf = CreateFrame("Frame", nil, cf)
+			bf:SetAllPoints()
+			bf:SetFlattensRenderLayers(true)
+			bf[bf.SetIsFrameBuffer and "SetIsFrameBuffer" or "SetFrameBuffer"](bf, true)
+		local ef = CreateFrame("Frame", nil, bf)
+			ef:SetAllPoints()
+		local uf = CreateFrame("Frame", nil, cf)
+			uf:SetAllPoints()
+			uf:SetFrameLevel(bf:GetFrameLevel()+5)
+		local r, w = setmetatable({[0]=cf, cd=CreateFrame("Cooldown", nil, ef, "CooldownFrameTemplate"), bf=bf}, apimeta)
+		r.cd:ClearAllPoints()
+		r.cd:SetSize(size-4, size-4)
+		r.cd:SetPoint("CENTER")
+		w = ef:CreateTexture(nil, "OVERLAY")
+			w:SetAllPoints()
+			w:SetTexture(gx.BorderLow)
+		w, r.edge = ef:CreateTexture(nil, "OVERLAY", nil, 1), w
+			w:SetAllPoints()
+			w:SetTexture(gx.BorderHigh)
+		w, r.hiEdge = CreateQuadTexture("BACKGROUND", size*2, gx.OuterGlow, cf), w
+			w:SetShown(false)
+		w, r.oglow = ef:CreateTexture(nil, "ARTWORK", nil, 1), w
+			w:SetAllPoints()
+			w:SetTexture(gx.InnerGlow)
+			w:SetAlpha(nested and 0.6 or 1)
+		w, r.iglow = ef:CreateTexture(nil, "ARTWORK"), w
+			w:SetPoint("CENTER")
+			w:SetSize(60*size/64, 60*size/64)
+		w, r.icon = ef:CreateTexture(nil, "ARTWORK", nil, -2), w
+			w:SetPoint("CENTER")
+			w:SetSize(60*size/64, 60*size/64)
+			w:SetColorTexture(0.15, 0.15, 0.15, 0.85)
+		w, r.iconbg = ef:CreateTexture(nil, "ARTWORK", nil, 2), w
+			w:SetSize(60*size/64, 60*size/64)
+			w:SetPoint("CENTER")
+			w:SetColorTexture(0,0,0)
+		w, r.veil = ef:CreateTexture(nil, "ARTWORK", nil, 3), w
+			w:SetAllPoints()
+			w:SetTexture(gx.Ribbon)
+			w:Hide()
+		w, r.ribbon = ef:CreateTexture(nil, "ARTWORK", nil, 4), w
+			w:SetPoint("BOTTOMLEFT", 4, 4)
+		w, r.overIcon = ef:CreateFontString(nil, "OVERLAY", "NumberFontNormal"), w
+			w:SetJustifyH("RIGHT")
+			w:SetPoint("BOTTOMRIGHT", -2, 1)
+		w, r.count = ef:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmallGray"), w
+			w:SetJustifyH("RIGHT")
+			w:SetPoint("TOPRIGHT", -2, -3)
+		w, r.key = ef:CreateTexture(nil, "ARTWORK", nil, 2), w
+			w:SetSize(size/5, size/4)
+			w:SetTexture("Interface\\GuildFrame\\GuildDifficulty")
+			w:SetTexCoord(0, 42/128, 6/64, 52/64)
+			w:SetPoint("TOPLEFT", 6*size/64, -3*size/64)
+		w, r.equipBanner = ef:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), w
+			w:SetSize(size-4, 12)
+			w:SetJustifyH("CENTER")
+			w:SetJustifyV("BOTTOM")
+			w:SetMaxLines(1)
+			w:SetPoint("BOTTOMLEFT", 3, 2)
+			w:SetPoint("BOTTOMRIGHT", r.count, "BOTTOMLEFT", 2, 0)
+		w, r.label = ef:CreateTexture(nil, "ARTWORK", nil, 3), w
+			w:SetPoint("TOPLEFT", 4, -4)
+			w:SetSize(14,14)
+			w:Hide()
+		w, r.qualityMark = ef:CreateShadow(nil, true), w
+			w:ClearAllPoints()
+			w:SetPoint("TOPLEFT", -2, 2)
+			w:SetPoint("BOTTOMRIGHT", 2, -2)
+			w:SetShown(ns.db.global.shadow)
+		w, r.shadow = ef:CreateMaskTexture(), w
+			w:SetTexture(gx.IconMask)
+			w:SetAllPoints()
+			r.icon:AddMaskTexture(w)
+
+		r.cdText = r.cd.cdText
+		r.iconAspect = 1
 		E:RegisterCooldown(r.cd, "OPie")
 		return r
 	end
@@ -218,10 +301,10 @@ function ns:OnInitialize()
 
 	_G.OPie.UI:RegisterIndicatorConstructor("elvui", {
 		name="ElvUI",
-		apiLevel=1,
+		apiLevel=3,
 		CreateIndicator=CreateIndicator,
 		supportsCooldownNumbers=false,
 		supportsShortLabels=true,
-		_CreateQuadTexture=CreateQuadTexture,
+		onParentAlphaChanged=function(self, pea) self.bf:SetAlpha(pea) end,
 	})
 end

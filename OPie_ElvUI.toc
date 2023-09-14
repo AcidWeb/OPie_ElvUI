@@ -3,7 +3,7 @@
 ## Interface-Wrath: 30402
 ## Title: OPie: |cff1784d1ElvUI|r
 ## Notes: Adds ElvUI skin to OPie.
-## Version: 1.1.7
+## Version: 1.2.0
 ## Author: AcidWeb
 ## RequiredDeps: ElvUI, OPie
 ## SavedVariables: OPieElvUIDB
