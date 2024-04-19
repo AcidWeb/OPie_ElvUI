@@ -1,7 +1,6 @@
-local _G = _G
 local addonName, ns = ...
 
-local E = unpack(_G.ElvUI)
+local E = unpack(ElvUI)
 local gx do
 	local b = ([[Interface\AddOns\%s\Media\]]):format(addonName)
 	gx = {
@@ -24,7 +23,7 @@ local darken do
 	end
 end
 local function shortBindName(bind)
-	return GetBindingText(bind, 1)
+	return GetBindingText(bind, "", true)
 end
 local CreateQuadTexture do
 	local function qf(f)
@@ -248,7 +247,7 @@ local CreateIndicator do
 			w:SetTexture("Interface\\GuildFrame\\GuildDifficulty")
 			w:SetTexCoord(0, 42/128, 6/64, 52/64)
 			w:SetPoint("TOPLEFT", 6*size/64, -3*size/64)
-		w, r.equipBanner = ef:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), w
+		w, r.equipBanner = ef:CreateFontString(nil, "OVERLAY", "TextStatusBarText"), w
 			w:SetSize(size-4, 12)
 			w:SetJustifyH("CENTER")
 			w:SetJustifyV("BOTTOM")
@@ -299,7 +298,7 @@ function ns:OnInitialize()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("OPie: ElvUI", ns.aceConfig)
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OPie: ElvUI", "OPie: |cff1784d1ElvUI|r")
 
-	_G.OPie.UI:RegisterIndicatorConstructor("elvui", {
+	OPie.UI:RegisterIndicatorConstructor("elvui", {
 		name="ElvUI",
 		apiLevel=3,
 		CreateIndicator=CreateIndicator,
