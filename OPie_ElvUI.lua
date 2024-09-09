@@ -1,4 +1,5 @@
-local addonName, ns = ...
+local COMPAT, addonName, ns = select(4, GetBuildInfo()), ...
+local FRAME_BUFFER_OK = COMPAT <= 11e4
 
 local E = unpack(ElvUI)
 local gx do
@@ -23,7 +24,7 @@ local darken do
 	end
 end
 local function shortBindName(bind)
-	return GetBindingText(bind, "", true)
+	return GetBindingText(bind, 1)
 end
 local CreateQuadTexture do
 	local function qf(f)
@@ -197,16 +198,16 @@ local CreateIndicator do
 		local bf = CreateFrame("Frame", nil, cf)
 			bf:SetAllPoints()
 			bf:SetFlattensRenderLayers(true)
-			bf[bf.SetIsFrameBuffer and "SetIsFrameBuffer" or "SetFrameBuffer"](bf, true)
+			bf:SetIsFrameBuffer(FRAME_BUFFER_OK)
 		local ef = CreateFrame("Frame", nil, bf)
 			ef:SetAllPoints()
 		local uf = CreateFrame("Frame", nil, cf)
 			uf:SetAllPoints()
 			uf:SetFrameLevel(bf:GetFrameLevel()+5)
 		local r, w = setmetatable({[0]=cf, cd=CreateFrame("Cooldown", nil, ef, "CooldownFrameTemplate"), bf=bf}, apimeta)
-		r.cd:ClearAllPoints()
-		r.cd:SetSize(size-4, size-4)
-		r.cd:SetPoint("CENTER")
+			r.cd:ClearAllPoints()
+			r.cd:SetSize(size-4, size-4)
+			r.cd:SetPoint("CENTER")
 		w = ef:CreateTexture(nil, "OVERLAY")
 			w:SetAllPoints()
 			w:SetTexture(gx.BorderLow)
@@ -247,7 +248,7 @@ local CreateIndicator do
 			w:SetTexture("Interface\\GuildFrame\\GuildDifficulty")
 			w:SetTexCoord(0, 42/128, 6/64, 52/64)
 			w:SetPoint("TOPLEFT", 6*size/64, -3*size/64)
-		w, r.equipBanner = ef:CreateFontString(nil, "OVERLAY", "TextStatusBarText"), w
+		w, r.equipBanner = ef:CreateFontString(nil, "OVERLAY", "TextStatusBarText", -1), w
 			w:SetSize(size-4, 12)
 			w:SetJustifyH("CENTER")
 			w:SetJustifyV("BOTTOM")
@@ -267,7 +268,6 @@ local CreateIndicator do
 			w:SetTexture(gx.IconMask)
 			w:SetAllPoints()
 			r.icon:AddMaskTexture(w)
-
 		r.cdText = r.cd.cdText
 		r.iconAspect = 1
 		E:RegisterCooldown(r.cd, "OPie")
@@ -304,6 +304,7 @@ function ns:OnInitialize()
 		CreateIndicator=CreateIndicator,
 		supportsCooldownNumbers=false,
 		supportsShortLabels=true,
-		onParentAlphaChanged=function(self, pea) self.bf:SetAlpha(pea) end,
+		fixedFrameBuffering=true,
+		onParentAlphaChanged=FRAME_BUFFER_OK and function(self, pea) self.bf:SetAlpha(pea) end or nil
 	})
 end
