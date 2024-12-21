@@ -18,4 +18,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: Package and release
-        uses: BigWigsMods/packager@toc-csv
+        uses: BigWigsMods/packager@v2
