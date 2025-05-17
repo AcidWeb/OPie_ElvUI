@@ -1,5 +1,5 @@
 local COMPAT, addonName, ns = select(4, GetBuildInfo()), ...
-local FRAME_BUFFER_OK = COMPAT <= 11e4
+local FRAME_BUFFER_OK = COMPAT == 40400
 
 local E = unpack(ElvUI)
 local gx do
@@ -305,6 +305,8 @@ function ns:OnInitialize()
 		supportsCooldownNumbers=false,
 		supportsShortLabels=true,
 		fixedFrameBuffering=true,
+		fixedFrameBufferingClassic=true,
+		fixedFrameBufferingEra=true,
 		onParentAlphaChanged=FRAME_BUFFER_OK and function(self, pea) self.bf:SetAlpha(pea) end or nil
 	})
 end
