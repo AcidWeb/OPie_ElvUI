@@ -1,7 +1,7 @@
-## Interface: 11507, 40402, 110105
+## Interface: 11507, 50500, 110200
 ## Title: OPie: |cff1784d1ElvUI|r
 ## Notes: Adds ElvUI skin to OPie.
-## Version: 1.3.5
+## Version: 1.3.6
 ## Author: AcidWeb
 ## RequiredDeps: ElvUI, OPie
 ## SavedVariables: OPieElvUIDB
