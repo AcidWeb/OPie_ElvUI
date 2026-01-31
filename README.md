@@ -8,4 +8,4 @@
 
 All Rights Reserved unless otherwise explicitly stated.
 
-Copyright (c) 2022-2024 Paweł Jastrzębski <pawelj@iosphe.re>
+Copyright (c) 2022-2026 Paweł Jastrzębski <pawelj@iosphe.re>

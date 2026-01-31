@@ -1,5 +1,4 @@
-local COMPAT, addonName, ns = select(4, GetBuildInfo()), ...
-local FRAME_BUFFER_OK = COMPAT == 40400
+local addonName, ns = ...
 
 local E = unpack(ElvUI)
 local gx do
@@ -189,6 +188,8 @@ function indicatorAPI:SetQualityOverlay(qual)
 	s:SetAtlas(qa)
 	s:SetShown(qa ~= nil)
 end
+function indicatorAPI:SetCooldownPH(_hintID, _qf, _holdCount)
+end
 
 local CreateIndicator do
 	local apimeta = {__index=indicatorAPI}
@@ -197,8 +198,6 @@ local CreateIndicator do
 			cf:SetSize(size, size)
 		local bf = CreateFrame("Frame", nil, cf)
 			bf:SetAllPoints()
-			bf:SetFlattensRenderLayers(true)
-			bf:SetIsFrameBuffer(FRAME_BUFFER_OK)
 		local ef = CreateFrame("Frame", nil, bf)
 			ef:SetAllPoints()
 		local uf = CreateFrame("Frame", nil, cf)
@@ -304,9 +303,10 @@ function ns:OnInitialize()
 		CreateIndicator=CreateIndicator,
 		supportsCooldownNumbers=false,
 		supportsShortLabels=true,
+		supportsCooldownPH=true,
 		fixedFrameBuffering=true,
 		fixedFrameBufferingClassic=true,
 		fixedFrameBufferingEra=true,
-		onParentAlphaChanged=FRAME_BUFFER_OK and function(self, pea) self.bf:SetAlpha(pea) end or nil
+		onParentAlphaChanged=nil
 	})
 end
