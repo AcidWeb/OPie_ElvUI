@@ -51,11 +51,6 @@ local CreateQuadTexture do
 	end
 	ns.CreateQuadTexture = CreateQuadTexture
 end
-local qualAtlas = {} do
-	for i=1,5 do
-		qualAtlas[i] = "Professions-Icon-Quality-Tier" .. i .. "-Small"
-	end
-end
 
 local function adjustIconAspect(self, aspect)
 	if self.iconAspect ~= aspect then
@@ -183,12 +178,14 @@ end
 function indicatorAPI:SetShortLabel(text)
 	self.label:SetText(text)
 end
-function indicatorAPI:SetQualityOverlay(qual)
-	local s, qa = self.qualityMark, qualAtlas[qual]
-	s:SetAtlas(qa)
-	s:SetShown(qa ~= nil)
+function indicatorAPI:SetQualityOverlay(_qualID, qualAtlas)
+	local s = self.qualityMark
+	if qualAtlas then
+		s:SetAtlas(qualAtlas)
+	end
+	s:SetShown(qualAtlas ~= nil)
 end
-function indicatorAPI:SetCooldownPH(_hintID, _qf, _holdCount)
+function indicatorAPI:SetCooldownDuration(duration, isRecharge)
 end
 
 local CreateIndicator do
@@ -238,7 +235,7 @@ local CreateIndicator do
 			w:SetPoint("BOTTOMLEFT", 4, 4)
 		w, r.overIcon = ef:CreateFontString(nil, "OVERLAY", "NumberFontNormal"), w
 			w:SetJustifyH("RIGHT")
-			w:SetPoint("BOTTOMRIGHT", -2, 1)
+			w:SetPoint("BOTTOMRIGHT", -2, 2)
 		w, r.count = ef:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmallGray"), w
 			w:SetJustifyH("RIGHT")
 			w:SetPoint("TOPRIGHT", -2, -3)
@@ -255,8 +252,8 @@ local CreateIndicator do
 			w:SetPoint("BOTTOMLEFT", 3, 2)
 			w:SetPoint("BOTTOMRIGHT", r.count, "BOTTOMLEFT", 2, 0)
 		w, r.label = ef:CreateTexture(nil, "ARTWORK", nil, 3), w
-			w:SetPoint("TOPLEFT", 4, -4)
-			w:SetSize(14,14)
+			w:SetPoint("TOPLEFT", 0, 0)
+			w:SetSize(18,18)
 			w:Hide()
 		w, r.qualityMark = ef:CreateShadow(nil, true), w
 			w:ClearAllPoints()
@@ -299,11 +296,10 @@ function ns:OnInitialize()
 
 	OPie.UI:RegisterIndicatorConstructor("elvui", {
 		name="ElvUI",
-		apiLevel=3,
+		apiLevel=4,
 		CreateIndicator=CreateIndicator,
 		supportsCooldownNumbers=false,
 		supportsShortLabels=true,
-		supportsCooldownPH=true,
 		fixedFrameBuffering=true,
 		fixedFrameBufferingClassic=true,
 		fixedFrameBufferingEra=true,
