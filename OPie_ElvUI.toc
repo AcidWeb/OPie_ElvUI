@@ -4,10 +4,8 @@
 ## Version: 2.0.0
 ## Author: AcidWeb
 ## RequiredDeps: ElvUI, OPie
-## SavedVariables: OPieElvUIDB
 ## IconTexture: Interface\AddOns\OPie_ElvUI\RELogo
 ## X-WoWI-ID: 26446
 ## X-Wago-ID: 9rN44jND
 
-Embeds.xml
 OPie_ElvUI.lua

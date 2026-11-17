@@ -1,8 +1,8 @@
 local COMPAT, addonName = select(4, GetBuildInfo()), ...
 local SECRETS = COMPAT > 12e4 or COMPAT > 160e2 and COMPAT < 2e4 or nil
-local E = unpack(ElvUI)
+local E, _, _, P = unpack(ElvUI)
 
-local addon = LibStub("AceAddon-3.0"):NewAddon("OPie: ElvUI")
+local mod = E:NewModule(addonName)
 
 local gx do
 	local b = ([[Interface\AddOns\%s\Media\]]):format(addonName)
@@ -14,6 +14,17 @@ local gx do
 		Ribbon = b .. "ribbon",
 		IconMask = b .. "iconmask",
 	}
+end
+
+local COOLDOWN_CATEGORY = "opie"
+P.opie = {
+	shadow = false,
+}
+do
+	local defaults = E:CopyTable({}, P.cooldown.global)
+	defaults.colors.edge = E:CopyTable({}, defaults.colors.edgeCharge)
+	defaults.colors.swipe.a = 0.8
+	P.cooldown[COOLDOWN_CATEGORY] = defaults
 end
 
 local IndicatorData, Indicator = {}, {}
@@ -89,21 +100,21 @@ local function setCooldownStyle(cd, usable)
 	else
 		cd:SetDrawEdge(false)
 		cd:SetDrawSwipe(true)
-		cd:SetSwipeColor(0, 0, 0, 0.8)
 	end
+	E:CooldownBling(cd, cd:GetEffectiveAlpha())
 end
 
 function Indicator:SetIcon(texture, aspect)
 	local d = IndicatorData[self]
 	d.icon:SetTexture(texture)
 	d.icon:SetTexCoord(unpack(E.TexCoords))
-	d.shadow:SetShown(addon.db.global.shadow)
+	d.shadow:SetShown(E.db.opie.shadow)
 	return adjustIconAspect(d, aspect)
 end
 function Indicator:SetIconAtlas(atlas, aspect)
 	local d = IndicatorData[self]
 	d.icon:SetAtlas(atlas)
-	d.shadow:SetShown(addon.db.global.shadow)
+	d.shadow:SetShown(E.db.opie.shadow)
 	return adjustIconAspect(d, aspect)
 end
 function Indicator:SetIconTexCoord(a,b,c,dc, e,f,g,h)
@@ -308,36 +319,40 @@ local function CreateIndicator(name, parent, size, nested)
 		w:ClearAllPoints()
 		w:SetPoint("TOPLEFT", -2, 2)
 		w:SetPoint("BOTTOMRIGHT", 2, -2)
-		w:SetShown(addon.db.global.shadow)
+		w:SetShown(E.db.opie.shadow)
 	d.shadow = w
-	E:RegisterCooldown(d.cd, "global")
+	E:RegisterCooldown(d.cd, COOLDOWN_CATEGORY)
 	cf:SetActive(false)
 	cf:SetHighlighted(false)
 	cf:SetOuterGlow(false)
 	return cf
 end
 
-addon.defaultSettings = {
-	global = {
-		shadow = false
-	}
-}
-addon.aceConfig = {
-	type = "group",
-	args = {
-		shadow = {
-			name = "Add a shadow under the buttons",
-			type = "toggle",
-			width = "full",
-			set = function(_, val) addon.db.global.shadow = val end,
-			get = function(_) return addon.db.global.shadow end
-		}
-	}
-}
-function addon:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New("OPieElvUIDB", self.defaultSettings, true)
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("OPie: ElvUI", self.aceConfig)
-	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("OPie: ElvUI", "OPie: |cff1784d1ElvUI|r")
+local function InsertOptions()
+	local C, L = unpack(E.Config)
+	local ACH, key = E.Libs.ACH, COOLDOWN_CATEGORY
+
+	local opie = ACH:Group("OPie", nil, nil, nil, function(info) return E.db.opie[info[#info]] end, function(info, value) E.db.opie[info[#info]] = value end)
+	opie.args.shadow = ACH:Toggle("Add a shadow under the buttons", nil, 1, nil, nil, "full")
+	opie.args.cooldownShortcut = ACH:Execute(L["Cooldown & Duration"], nil, 2, function() E.Libs.AceConfigDialog:SelectGroup("ElvUI", "cooldown", key) end, nil, nil, 160)
+	E.Options.args.opie = opie
+
+	local main = ACH:Group("OPie", nil, 22, nil, function(info) return E.db.cooldown[key][info[#info]] end, function(info, value) E.db.cooldown[key][info[#info]] = value; E:CooldownSettings(key) end)
+	local general = E:CopyTable({}, E.Options.args.cooldown.args.global.args.generalGroup)
+	general.args.minDuration.get = function() return E.db.cooldown[key].minDuration * 0.001 end
+	general.args.minDuration.set = function(_, value) E.db.cooldown[key].minDuration = value * 1000; E:CooldownSettings(key) end
+	main.args.generalGroup = general
+	local _, textGroup, thresholdGroup = C:GetCooldownConfig(key, E.db.cooldown[key], P.cooldown[key], true, true)
+	main.args.textGroup = textGroup
+	main.args.thresholdGroup = thresholdGroup
+	E.Options.args.cooldown.args[key] = main
+end
+
+function mod:Initialize()
+	E.Libs.EP:RegisterPlugin(addonName, InsertOptions)
+	hooksecurefunc(E, "UpdateAll", function()
+		E:CooldownSettings(COOLDOWN_CATEGORY)
+	end)
 
 	OPie.UI:RegisterIndicatorConstructor("elvui", {
 		name="ElvUI",
@@ -347,3 +362,5 @@ function addon:OnInitialize()
 		supportsShortLabels=true,
 	})
 end
+
+E:RegisterModule(mod:GetName())
