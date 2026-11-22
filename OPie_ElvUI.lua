@@ -342,9 +342,10 @@ local function InsertOptions()
 	general.args.minDuration.get = function() return E.db.cooldown[key].minDuration * 0.001 end
 	general.args.minDuration.set = function(_, value) E.db.cooldown[key].minDuration = value * 1000; E:CooldownSettings(key) end
 	main.args.generalGroup = general
-	local _, textGroup, thresholdGroup = C:GetCooldownConfig(key, E.db.cooldown[key], P.cooldown[key], true, true)
+	local _, textGroup, thresholdGroup, colorGroup = C:GetCooldownConfig(key, E.db.cooldown[key], P.cooldown[key], true, true)
 	main.args.textGroup = textGroup
 	main.args.thresholdGroup = thresholdGroup
+	main.args.colorGroup = colorGroup
 	E.Options.args.cooldown.args[key] = main
 end
 
